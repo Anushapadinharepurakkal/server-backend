@@ -8,5 +8,5 @@ from . import (
     ir_ui_menu,
     res_groups,
     res_role,
-    role_policy,
+    res_user_role_policy,
 )
