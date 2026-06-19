@@ -71,7 +71,8 @@ class TestFilterOdooX2manyCommands(TransactionCase):
         self.assertEqual(result, [])
 
     def test_cmd5_with_keep_ids_converts_to_cmd6(self):
-        """Command 5 (clear) converts to cmd-6 with keep_ids when keep_ids is non-empty."""
+        """Command 5 (clear) converts to cmd-6 with keep_ids
+        when keep_ids is non-empty."""
         result = filter_odoo_x2many_commands([(5,)], [1, 2])
         self.assertEqual(result, [(6, 0, [1, 2])])
 
@@ -89,13 +90,13 @@ class TestFilterOdooX2manyCommands(TransactionCase):
         """Mixed batch: only keep-ids survive cmd1-4; cmd6 filtered; cmd5 → cmd6."""
         keep = [1, 2, 3]
         cmds = [
-            (1, 1, {"x": 1}),   # keep
-            (2, 99),             # discard
-            (3, 2),             # keep
-            (4, 3),             # keep
-            (4, 50),            # discard
-            (6, 0, [1, 99]),    # → (6,0,[1])
-            (5,),               # → (6,0,[1,2,3])
+            (1, 1, {"x": 1}),  # keep
+            (2, 99),  # discard
+            (3, 2),  # keep
+            (4, 3),  # keep
+            (4, 50),  # discard
+            (6, 0, [1, 99]),  # → (6,0,[1])
+            (5,),  # → (6,0,[1,2,3])
         ]
         result = filter_odoo_x2many_commands(cmds, keep)
         self.assertIn((1, 1, {"x": 1}), result)
@@ -111,7 +112,8 @@ class TestDiffToOdooX2manyCommands(TransactionCase):
     """Unit tests for diff_to_odoo_x2many_commands()."""
 
     def test_add_and_remove(self):
-        """IDs in target but not current → add (4); current not in target → remove (3)."""
+        """IDs in target but not current → add (4);
+        current not in target → remove (3)."""
         diff = diff_to_odoo_x2many_commands([1, 2, 3], [2, 3, 4])
         self.assertIn((4, 4), diff)
         self.assertIn((3, 1), diff)

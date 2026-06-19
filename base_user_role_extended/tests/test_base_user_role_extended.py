@@ -2,6 +2,7 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo.tests.common import TransactionCase
+from odoo.tools import config
 
 
 class TestResUserRolePolicy(TransactionCase):
@@ -58,16 +59,7 @@ class TestBaseModelExtensions(TransactionCase):
         self.assertIn(self.env.ref("base.group_user").id, keep_ids)
 
     def test_user_has_groups_note_unreachable_in_test_mode(self):
-        """
-        base.py user_has_groups is guarded by config.get("test_enable").
-        During test runs test_enable is always True so the method immediately
-        delegates to super() without executing lines 49-61.  This is by design —
-        the full role-filter logic only runs in production.
-        We document this explicitly so the coverage gap is expected.
-        """
         # Verify the guard condition itself: test_enable is True in test runs
-        from odoo.tools import config
-
         self.assertTrue(config.get("test_enable"))
 
     def test_compute_bypass_role_policy_for_all_users(self):
