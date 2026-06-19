@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <!-- ==================== view.access.rule Views ==================== -->
+    <!-- List View -->
+    <record id="view_access_rule_list_view" model="ir.ui.view">
+        <field name="name">view.access.rule.list</field>
+        <field name="model">view.access.rule</field>
+        <field name="arch" type="xml">
+            <list string="View Access Rules">
+                <field name="sequence" />
+                <field name="role_id" />
+                <field name="model_id" />
+                <field name="view_id" />
+                <field name="view_type" />
+                <field name="target_element_ui" />
+                <field name="resolved_element" />
+                <field name="rule_invisible" />
+                <field name="rule_readonly" />
+                <field name="rule_required" />
+            </list>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_access_rule_form_view" model="ir.ui.view">
+        <field name="name">view.access.rule.form</field>
+        <field name="model">view.access.rule</field>
+        <field name="arch" type="xml">
+            <form string="View Access Rule">
+                <sheet>
+                    <group>
+                        <group string="Target">
+                            <field name="sequence" />
+                            <field name="role_id" />
+                            <field name="model_id" />
+                            <field name="model_name" invisible="1" />
+                            <field
+                                name="view_id"
+                                domain="[('model', '=', model_name)]"
+                            />
+                            <field name="view_xml_id" readonly="1" />
+                            <field
+                                name="view_type"
+                                readonly="view_id != False"
+                                force_save="1"
+                            />
+                            <field name="target_element_ui" />
+                            <field name="resolved_element" />
+                        </group>
+                        <group string="Access Rules">
+                            <field
+                                name="rule_invisible"
+                                placeholder="e.g. True or state == 'done'"
+                            />
+                            <field
+                                name="rule_readonly"
+                                placeholder="e.g. True or state == 'done'"
+                            />
+                            <field
+                                name="rule_required"
+                                placeholder="e.g. True or state == 'done'"
+                            />
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_access_rule_search_view" model="ir.ui.view">
+        <field name="name">view.access.rule.search</field>
+        <field name="model">view.access.rule</field>
+        <field name="arch" type="xml">
+            <search string="Search View Access Rules">
+                <field name="role_id" />
+                <field name="model_id" />
+                <field name="target_element_ui" />
+                <filter
+                    string="Form"
+                    name="type_form"
+                    domain="[('view_type','=','form')]"
+                />
+                <filter
+                    string="List"
+                    name="type_list"
+                    domain="[('view_type','=','list')]"
+                />
+                <filter
+                    string="Kanban"
+                    name="type_kanban"
+                    domain="[('view_type','=','kanban')]"
+                />
+                <group expand="0" string="Group By">
+                    <filter
+                        string="Role"
+                        name="group_role"
+                        context="{'group_by': 'role_id'}"
+                    />
+                    <filter
+                        string="Model"
+                        name="group_model"
+                        context="{'group_by': 'model_id'}"
+                    />
+                    <filter
+                        string="View Type"
+                        name="group_view_type"
+                        context="{'group_by': 'view_type'}"
+                    />
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_view_access_rule" model="ir.actions.act_window">
+        <field name="name">View Access Rules</field>
+        <field name="res_model">view.access.rule</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_access_rule_search_view" />
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No view access rules defined yet.
+            </p>
+            <p>
+                Create rules to control field/button visibility, readonly state,
+                and required state per role.
+            </p>
+        </field>
+    </record>
+
+    <!-- ==================== Inherit res.users.role Form ==================== -->
+
+    <record id="res_users_role_form_view_inherited" model="ir.ui.view">
+        <field name="name">res.users.role.form.view_access_rules</field>
+        <field name="model">res.users.role</field>
+        <field name="inherit_id" ref="base_user_role.view_res_users_role_form" />
+        <field name="arch" type="xml">
+            <notebook position="inside">
+                <page string="View Access Rules" name="view_access_rules">
+                    <field name="view_access_rule_ids">
+                        <list editable="bottom">
+                            <field name="sequence" />
+                            <field name="model_id" />
+                            <field name="model_name" column_invisible="1" />
+                            <field name="view_id" />
+                            <field name="view_xml_id" />
+                            <field
+                                name="view_type"
+                                readonly="view_id != False"
+                                force_save="1"
+                            />
+                            <field name="target_element_ui" />
+                            <field name="resolved_element" column_invisible="1" />
+                            <field name="rule_invisible" />
+                            <field name="rule_readonly" />
+                            <field name="rule_required" />
+                        </list>
+                    </field>
+                </page>
+            </notebook>
+        </field>
+    </record>
+</odoo>
