@@ -8,7 +8,11 @@
     "depends": [
         "base_user_role",
     ],
-    "data": [],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/view_access_rule_views.xml",
+        "views/res_users_views.xml",
+    ],
     "installable": True,
     "license": "LGPL-3",
 }
