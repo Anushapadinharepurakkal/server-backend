@@ -23,7 +23,9 @@ class RolePolicyMenuActionCommon(models.AbstractModel):
                 else:
                     del vals["groups_id"]
             if "role_ids" in vals:
-                roles = self.env["res.users.role"].browse(vals["role_ids"][0][2])
+                roles = self.env["res.users.role"].browse(
+                    vals["role_ids"][0][2]
+                )
                 vals.setdefault("groups_id", []).extend(
                     [(4, x.id) for x in roles.mapped("group_id")]
                 )

@@ -3,13 +3,11 @@
 from odoo import SUPERUSER_ID, api
 
 
-def post_init_hook(cr, registry):
+def post_init_hook(env):
     """
     Remove groups from menuitems, views, actions and users since the standard groups
     are replaced by role groups when installing this module.
     """
-    env = api.Environment(
-        cr, SUPERUSER_ID, {"active_test": False, "role_policy_init": True}
-    )
+    env = env(context=dict(env.context, active_test=False, role_policy_init=True))
     menus = env["ir.ui.menu"].search([])
     menus.write({"groups_id": [(5,)]})
