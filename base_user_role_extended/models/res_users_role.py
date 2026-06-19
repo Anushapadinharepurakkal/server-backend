@@ -18,3 +18,7 @@ class ResUsersRole(models.Model):
         inverse_name="role_id",
         string="View Access Rules",
     )
+
+    role_model_access_ids = fields.One2many(
+        "role.model.access", "role_id", string="Role Model Access"
+    )
