@@ -16,11 +16,9 @@ class IrModelAccess(models.Model):
         )
         if not roles:
             return {}
-
         role_access_records = (
             self.env["role.model.access"].sudo().search([("role_id", "in", roles.ids)])
         )
-
         permission_map = {}
         for record in role_access_records:
             model_name = record.model_id.model
@@ -31,7 +29,6 @@ class IrModelAccess(models.Model):
                     "create": False,
                     "unlink": False,
                 }
-
             permission_map[model_name]["read"] = (
                 permission_map[model_name]["read"] or record.perm_read
             )
@@ -52,17 +49,13 @@ class IrModelAccess(models.Model):
     def _get_allowed_models(self, mode="read"):
         if self.env.su:
             return super()._get_allowed_models(mode)
-
         allowed_models = set(super()._get_allowed_models(mode))
-
         permission_map = self._get_role_model_permission_map(self.env.uid)
         if not permission_map:
             return frozenset(allowed_models)
-
         for model_name, overrides in permission_map.items():
             if overrides.get(mode, False):
                 allowed_models.add(model_name)
             else:
                 allowed_models.discard(model_name)
-
         return frozenset(allowed_models)

@@ -41,6 +41,28 @@
                         </list>
                     </field>
                 </page>
+
+                <page string="View Access Rules" name="view_access_rules">
+                    <field name="view_access_rule_ids">
+                        <list editable="bottom">
+                            <field name="sequence" />
+                            <field name="model_id" />
+                            <field name="model_name" column_invisible="1" />
+                            <field name="view_id" />
+                            <field name="view_xml_id" />
+                            <field
+                                name="view_type"
+                                readonly="view_id != False"
+                                force_save="1"
+                            />
+                            <field name="target_element_ui" />
+                            <field name="resolved_element" column_invisible="1" />
+                            <field name="rule_invisible" />
+                            <field name="rule_readonly" />
+                            <field name="rule_required" />
+                        </list>
+                    </field>
+                </page>
             </xpath>
         </field>
     </record>

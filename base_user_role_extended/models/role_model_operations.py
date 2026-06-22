@@ -1,12 +1,11 @@
 # Copyright 2026 CIT Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
-
 from odoo import api, fields, models
 
 
 class ResUsersRoleModelOperations(models.Model):
-    _name = "res.users.role.model.operations"
-    _description = "User Role Model Operations"
+    _name = "role.model.operations"
+    _description = "Role Model Operations"
 
     role_id = fields.Many2one(
         comodel_name="res.users.role",
@@ -60,7 +59,7 @@ class ResUsersRoleModelOperations(models.Model):
         roles = self.mapped("role_id")
         for role in roles:
             has_export_enabled = (
-                self.env["res.users.role.model.operations"]
+                self.env["role.model.operations"]
                 .sudo()
                 .search_count(
                     [
@@ -100,7 +99,7 @@ class ResUsersRoleModelOperations(models.Model):
         if allow_export_group:
             for role in roles:
                 has_export_enabled = (
-                    self.env["res.users.role.model.operations"]
+                    self.env["role.model.operations"]
                     .sudo()
                     .search_count(
                         [

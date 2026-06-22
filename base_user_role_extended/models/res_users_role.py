@@ -8,7 +8,7 @@ class ResUsersRole(models.Model):
     _inherit = "res.users.role"
 
     role_model_operations_ids = fields.One2many(
-        comodel_name="res.users.role.model.operations",
+        comodel_name="role.model.operations",
         inverse_name="role_id",
         string="Model Operations",
     )

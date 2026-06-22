@@ -12,7 +12,7 @@ class TestRoleModelOperations(TransactionCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.role_model = cls.env["res.users.role"]
-        cls.role_model_operations = cls.env["res.users.role.model.operations"]
+        cls.role_model_operations = cls.env["role.model.operations"]
         cls.model_ir_model = cls.env["ir.model"]
         cls.res_users_model = cls.model_ir_model.search(
             [("model", "=", "res.users")], limit=1
@@ -435,7 +435,7 @@ class TestRoleModelOperations(TransactionCase):
             tree.set("export_xlsx", "1")
 
             # Apply role restrictions which will hit the mocked ref
-            ops = self.env["res.users.role.model.operations"].create(
+            ops = self.env["role.model.operations"].create(
                 {
                     "role_id": self.test_role.id,
                     "model_id": self.res_partner_model.id,

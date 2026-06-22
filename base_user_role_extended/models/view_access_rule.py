@@ -95,7 +95,6 @@ class ViewAccessRule(models.Model):
                 error_msg = _("Error while processing rule %s", rule.display_name)
                 rule_errors.insert(0, error_msg)
                 errors.append("\n".join(rule_errors))
-
         if errors:
             raise UserError("\n\n".join(errors))
 
