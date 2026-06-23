@@ -13,12 +13,10 @@ class IrUiView(models.Model):
         Accepts only 'tree' (the XML node architecture element).
         """
         # Bypass checks for the superuser
-        res = super()._postprocess_access_rights(tree)
-
-        if self.env.user.bypass_role_policy:
-            return res
-
         target_model = tree.get("model_access_rights")
+        tree = super()._postprocess_access_rights(tree)
+        if self.env.user.bypass_role_policy:
+            return tree
         if target_model and tree.tag in ("form", "list", "kanban"):
             current_user = self.env.user
             print(
