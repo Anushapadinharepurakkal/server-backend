@@ -13,12 +13,37 @@ class IrUiView(models.Model):
         Accepts only 'tree' (the XML node architecture element).
         """
         # Bypass checks for the superuser
-        tree = super()._postprocess_access_rights(tree)
+        res = super()._postprocess_access_rights(tree)
+
         if self.env.user.bypass_role_policy:
-            return tree
+            return res
+
         target_model = tree.get("model_access_rights")
         if target_model and tree.tag in ("form", "list", "kanban"):
             current_user = self.env.user
+            print(
+                "TARGET MODEL",
+                target_model,
+                "USER",
+                current_user,
+                "ROLE LINES",
+                current_user.role_line_ids,
+                "ROLES",
+                current_user.role_line_ids.mapped("role_id"),
+                "OPS",
+                self.env["role.model.operations"]
+                .sudo()
+                .search(
+                    [
+                        (
+                            "role_id",
+                            "in",
+                            current_user.role_line_ids.mapped("role_id").ids,
+                        ),
+                        ("model_id.model", "=", target_model),
+                    ]
+                ),
+            )
             active_role_lines = current_user._get_enabled_roles()
             if active_role_lines:
                 active_roles = active_role_lines.mapped("role_id")
@@ -44,4 +69,4 @@ class IrUiView(models.Model):
 
                     if not any(op.perm_archive for op in operations):
                         tree.set("archive", "0")
-        return tree
+        return res

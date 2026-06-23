@@ -21,81 +21,70 @@ class IrUiMenu(models.Model):
     @tools.ormcache("frozenset(self.env.user.groups_id.ids)", "debug")
     def _visible_menu_ids(self, debug=False):
         """
-        Hide all menus without the role_group(s) of the user.
+        Hide menus that are explicitly restricted by the user's roles.
         """
         if self.env.user.bypass_role_policy or config.get("test_enable"):
             return self._visible_menu_ids_user_admin(debug=debug)
 
-        visible_ids = super()._visible_menu_ids(debug=debug)
-        # role_line_ids.role_id gives the actual res.users.role records
         user_roles = self.env.user.role_line_ids.filtered(
             lambda lines: lines.is_enabled
         ).mapped("role_id")
-        user_groups = user_roles.mapped("group_id")
-        for group_ref in self._role_policy_untouchable_groups():
-            user_groups |= self.env.ref(group_ref)
+        user_role_groups = user_roles.mapped("group_id")
 
-        menus = self.browse()
-        for menu in self.browse(visible_ids):
-            if menu.groups_id & user_groups:
-                menus |= menu
-
-        # keep only action menus and their folder ancestors
-        action_menus = menus.filtered(lambda m: m.action and m.action.exists())
-
-        def collect_parent_ids(menu, ids):
-            parent = menu.parent_id
-            if parent and parent in menus:
-                ids.append(parent.id)
-                collect_parent_ids(parent, ids)
-
-        filtered_ids = []
-        for menu in action_menus:
-            ids = [menu.id]
-            collect_parent_ids(menu, ids)
-            filtered_ids.extend(ids)
-
-        return set(filtered_ids)
+        return self._get_visible_menus_core(debug=debug, deny_groups=user_role_groups)
 
     @api.model
     @tools.ormcache("frozenset(self.env.user.groups_id.ids)", "debug")
     def _visible_menu_ids_user_admin(self, debug=False):
         """
-        Same logic as in base/models/ir_ui_menu.py but we ignore
-        the role groups for user_root and user_admin.
+        Same logic as base but we ignore the role groups for user_root and user_admin.
         """
-        # retrieve all menus, and determine which ones are visible
+        return self._get_visible_menus_core(
+            debug=debug, deny_groups=self.env["res.groups"]
+        )
+
+    def _get_visible_menus_core(self, debug=False, deny_groups=None):
+        """
+        Core logic to evaluate menu visibility:
+        1. Treat role groups as transparent for standard Odoo ALLOW checks.
+        2. Apply deny_groups to explicitly hide restricted menus.
+        """
         context = {"ir.ui.menu.full_list": True}
-        menus = self.with_context(**context).search([])
+        menus = self.with_context(**context).search([]).sudo()
 
         groups = self.env.user.groups_id
         if not debug:
             groups = groups - self.env.ref("base.group_no_one")
-        # first discard all menus with groups the user does not have
+
+        # 1. Base visibility: Must have standard groups (if any non-role groups exist)
         menus = menus.filtered(
             lambda menu: not menu.groups_id.filtered(lambda r: not r.role)
             or menu.groups_id & groups
         )
 
-        # take apart menus that have an action
+        # 2. Apply Role Restrictions: 
+        # HIDE if the menu has a role group that the user has
+        if deny_groups:
+            menus = menus.filtered(lambda menu: not (menu.groups_id & deny_groups))
+
+        # 3. take apart menus that have an action
         action_menus = menus.filtered(lambda m: m.action and m.action.exists())
         folder_menus = menus - action_menus
         visible = self.browse()
 
-        # process action menus, check whether their action is allowed
+        # 4. process action menus, check whether their action is allowed
         access = self.env["ir.model.access"]
-        MODEL_GETTER = {
-            "ir.actions.act_window": lambda action: action.res_model,
-            "ir.actions.report": lambda action: action.model,
-            "ir.actions.server": lambda action: action.model_id.model,
+        MODEL_BY_TYPE = {
+            "ir.actions.act_window": "res_model",
+            "ir.actions.report": "model",
+            "ir.actions.server": "model_name",
         }
         for menu in action_menus:
-            get_model = MODEL_GETTER.get(menu.action._name)
-            if (
-                not get_model
-                or not get_model(menu.action)
-                or access.check(get_model(menu.action), "read", False)
-            ):
+            action = menu.action
+            model_name = (
+                action._name in MODEL_BY_TYPE and action[MODEL_BY_TYPE[action._name]]
+            )
+            if not model_name or access.check(model_name, "read", False):
                 # make menu visible, and its folder ancestors, too
                 visible += menu
                 menu = menu.parent_id
