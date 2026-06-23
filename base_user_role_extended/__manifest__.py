@@ -7,7 +7,7 @@
     "category": "Tools",
     "summary": "Extends user roles with additional access control features",
     "author": "CIT Services, Odoo Community Association (OCA)",
-    "website": "https://github.com/OCA/server-backend",
+    "website": "https://cit-services.in/",
     "license": "LGPL-3",
     "depends": ["base_user_role", "mail"],
     "data": [
