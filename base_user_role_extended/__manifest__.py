@@ -9,7 +9,7 @@
     "author": "CIT Services, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/server-backend",
     "license": "LGPL-3",
-    "depends": ["account", "base_user_role", "mail"],
+    "depends": ["base_user_role", "mail"],
     "data": [
         "security/ir.model.access.csv",
         "views/res_users_role.xml",
