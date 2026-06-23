@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 CIT Services
+     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
 <odoo>
     <!-- ==================== view.access.rule Views ==================== -->
     <!-- List View -->
-    <record id="view_access_rule_list_view" model="ir.ui.view">
+    <record id="view_access_rule_view_list" model="ir.ui.view">
         <field name="name">view.access.rule.list</field>
         <field name="model">view.access.rule</field>
         <field name="arch" type="xml">
@@ -22,7 +25,7 @@
     </record>
 
     <!-- Form View -->
-    <record id="view_access_rule_form_view" model="ir.ui.view">
+    <record id="view_access_rule_view_form" model="ir.ui.view">
         <field name="name">view.access.rule.form</field>
         <field name="model">view.access.rule</field>
         <field name="arch" type="xml">
@@ -68,7 +71,7 @@
     </record>
 
     <!-- Search View -->
-    <record id="view_access_rule_search_view" model="ir.ui.view">
+    <record id="view_access_rule_view_search" model="ir.ui.view">
         <field name="name">view.access.rule.search</field>
         <field name="model">view.access.rule</field>
         <field name="arch" type="xml">
@@ -113,7 +116,7 @@
     </record>
 
     <!-- Action -->
-    <record id="action_view_access_rule" model="ir.actions.act_window">
+    <record id="view_access_rule_action" model="ir.actions.act_window">
         <field name="name">View Access Rules</field>
         <field name="res_model">view.access.rule</field>
         <field name="view_mode">list,form</field>

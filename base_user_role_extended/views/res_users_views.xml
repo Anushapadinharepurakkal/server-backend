@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
+<!-- Copyright 2026 CIT Services
+     License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+-->
 <odoo>
     <!-- Inherit res.users Form to add View Access Rules tab -->
     <record id="view_users_form_inherited" model="ir.ui.view">
