@@ -22,7 +22,7 @@ class IrActionsActions(models.Model):
 
         active_roles = active_role_lines.mapped("role_id")
         operations = (
-            self.env["res.users.role.model.operations"]
+            self.env["role.model.operations"]
             .sudo()
             .search(
                 [

@@ -15,7 +15,6 @@ class RoleModelAccess(models.Model):
     model_id = fields.Many2one(
         "ir.model", string="Model", required=True, ondelete="cascade"
     )
-
     perm_read = fields.Boolean(string="Read", default=False)
     perm_write = fields.Boolean(string="Write", default=False)
     perm_create = fields.Boolean(string="Create", default=False)

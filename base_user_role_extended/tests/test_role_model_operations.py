@@ -27,7 +27,7 @@ class TestRoleModelOperations(TransactionCase):
         )
 
     def test_role_model_operations_creation(self):
-        """Test creation of res.users.role.model.operations
+        """Test creation of role.model.operations
         and its relation to res.users.role."""
         model_operations = self.role_model_operations.create(
             {
