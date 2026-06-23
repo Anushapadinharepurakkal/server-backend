@@ -8,7 +8,24 @@
         <field name="model">res.users.role</field>
         <field name="inherit_id" ref="base_user_role.view_res_users_role_form" />
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
+            <xpath expr="//page[@name='page_internal_notes']" position="before">
+                <page name="page_model_access" string="Model Access">
+                    <div class="alert alert-info" role="alert">
+                        <strong>Note:</strong>
+                        Configure model-level access rights here. You can control
+                        <b>Read</b>, <b>Write</b>, <b>Create</b>,
+                        and <b>Delete</b> access for the selected model.
+                    </div>
+                    <field name="role_model_access_ids" nolabel="1">
+                        <list editable="bottom">
+                            <field name="model_id" options="{'no_create': True}" />
+                            <field name="perm_read" />
+                            <field name="perm_write" />
+                            <field name="perm_create" />
+                            <field name="perm_unlink" />
+                        </list>
+                    </field>
+                </page>
                 <page name="model_operations" string="Model Operations">
                     <div class="alert alert-info" role="alert">
                         <strong>Note:</strong>
@@ -44,23 +61,6 @@
                         that should be hidden from users assigned to this role.
                     </div>
                     <field name="menu_ids" context="{'ir.ui.menu.full_list': True}" />
-                </page>
-                <page name="page_model_access" string="Model Access">
-                    <div class="alert alert-info" role="alert">
-                        <strong>Note:</strong>
-                        Configure model-level access rights here. You can control
-                        <b>Read</b>, <b>Write</b>, <b>Create</b>,
-                        and <b>Delete</b> access for the selected model.
-                    </div>
-                    <field name="role_model_access_ids" nolabel="1">
-                        <list editable="bottom">
-                            <field name="model_id" />
-                            <field name="perm_read" />
-                            <field name="perm_write" />
-                            <field name="perm_create" />
-                            <field name="perm_unlink" />
-                        </list>
-                    </field>
                 </page>
 
                 <page string="View Access Rules" name="view_access_rules">
