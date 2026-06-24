@@ -2,9 +2,6 @@
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
 from odoo import api, fields, models
-import logging
-
-_logger = logging.getLogger(__name__)
 
 class ResUsersRole(models.Model):
     _name = "res.users.role"
@@ -21,8 +18,9 @@ class ResUsersRole(models.Model):
         return records
 
     def write(self, vals):
+        update_access = "implied_ids" in vals
         res = super().write(vals)
-        if "implied_ids" in vals:
+        if update_access:
             self._update_role_model_access()
         return res
 
@@ -31,9 +29,14 @@ class ResUsersRole(models.Model):
         Synchronize the access rights from the associated user groups
         into the role's model access records.
         """
+        # Invalidate the cache to avoid stale data from base_user_role's sudo() writes
+        self.invalidate_recordset(["implied_ids"])
+        self.mapped("group_id").invalidate_recordset(["implied_ids"])
+
         for role in self:
-            # Get all model access from the groups implied by this role
-            access_records = role.implied_ids.mapped("model_access")
+            # Get all model access from the groups implied by this role using sudo()
+            # to ensure we fetch the most up-to-date groups from the database.
+            access_records = role.sudo().implied_ids.mapped("model_access")
             
             # Combine permissions per model to prevent unique constraint violations
             model_permissions = {}
@@ -54,20 +57,28 @@ class ResUsersRole(models.Model):
             # Clear existing role model access records to keep it in sync
             role.role_model_access_ids.unlink()
             
-            # Create the updated role model access records
-            new_access_vals = []
+            # Also clear existing standard ir.model.access records for this group
+            self.env["ir.model.access"].search([("group_id", "=", role.group_id.id)]).unlink()
+            
+            # Create the updated role model access records and ir.model.access records
+            ir_access_vals = []
             for model_id, perms in model_permissions.items():
-                new_access_vals.append({
-                    "role_id": role.id,
+
+                
+                model_rec = self.env["ir.model"].browse(model_id)
+                ir_access_vals.append({
+                    "name": f"{model_rec.model}",
                     "model_id": model_id,
+                    "group_id": role.group_id.id,
                     "perm_read": perms["perm_read"],
                     "perm_write": perms["perm_write"],
                     "perm_create": perms["perm_create"],
                     "perm_unlink": perms["perm_unlink"],
                 })
             
-            if new_access_vals:
-                self.env["role.model.access"].create(new_access_vals)
+            if ir_access_vals:
+                self.env["ir.model.access"].create(ir_access_vals)
 
     def unlink(self):
         self.env["role.model.access"].search([("role_id", "in", self.ids)]).unlink()
+        return super().unlink()
