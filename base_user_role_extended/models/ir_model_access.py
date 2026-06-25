@@ -30,9 +30,9 @@ class IrModelAccess(models.Model):
 
         # Collect the group_id of each active role for this user.
         user = self.env.user.sudo()
-        roles = user.role_line_ids.filtered(
-            lambda line: line.is_enabled
-        ).mapped("role_id")
+        roles = user.role_line_ids.filtered(lambda line: line.is_enabled).mapped(
+            "role_id"
+        )
 
         if not roles:
             # No active roles → normal Odoo group-based access.
@@ -44,8 +44,9 @@ class IrModelAccess(models.Model):
         # No global (NULL group) fallback — if the role group's access record
         # for a model is deleted, that model becomes inaccessible immediately.
         self.flush_model()
-        rows = self.env.execute_query(SQL(
-            """
+        rows = self.env.execute_query(
+            SQL(
+                """
             SELECT m.model
               FROM ir_model_access a
               JOIN ir_model m ON (m.id = a.model_id)
@@ -54,7 +55,8 @@ class IrModelAccess(models.Model):
                AND a.group_id IN %s
             GROUP BY m.model
             """,
-            SQL(mode),
-            role_group_ids,
-        ))
+                SQL(mode),
+                role_group_ids,
+            )
+        )
         return frozenset(row[0] for row in rows)

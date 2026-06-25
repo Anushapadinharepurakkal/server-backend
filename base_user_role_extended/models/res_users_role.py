@@ -3,6 +3,7 @@
 
 from odoo import api, models
 
+
 class ResUsersRole(models.Model):
     _name = "res.users.role"
     _inherit = ["res.users.role"]
@@ -20,18 +21,18 @@ class ResUsersRole(models.Model):
             self._update_role_model_access()
         return res
 
-    def _update_role_model_access(self, perm_fields={}):
+    def _update_role_model_access(self, perm_fields=None):
         """
         Synchronize the access rights from the associated user groups
         into the role's model access records.
         """
         default_perm_fields = {
-            "perm_read": False, 
-            "perm_write": False, 
-            "perm_create": False, 
-            "perm_unlink": False
+            "perm_read": False,
+            "perm_write": False,
+            "perm_create": False,
+            "perm_unlink": False,
         }
-        if perm_fields:
+        if perm_fields is not None:
             default_perm_fields.update(perm_fields)
         perm_fields = default_perm_fields
 
@@ -41,10 +42,12 @@ class ResUsersRole(models.Model):
 
         for role in self:
             access_records = role._get_implied_model_access_records()
-            model_permissions = self.parse_model_access(access_records, perm_fields=perm_fields)
-            
+            model_permissions = self.parse_model_access(
+                access_records, perm_fields=perm_fields
+            )
+
             role._clear_existing_model_access()
-            
+
             ir_access_vals = role._prepare_model_access_vals(model_permissions)
             if ir_access_vals:
                 self.env["ir.model.access"].create(ir_access_vals)
@@ -58,7 +61,9 @@ class ResUsersRole(models.Model):
     def _clear_existing_model_access(self):
         self.ensure_one()
         # Clear existing standard ir.model.access records for this group
-        self.env["ir.model.access"].search([("group_id", "=", self.group_id.id)]).unlink()
+        self.env["ir.model.access"].search(
+            [("group_id", "=", self.group_id.id)]
+        ).unlink()
 
     def _prepare_model_access_vals(self, model_permissions):
         self.ensure_one()
