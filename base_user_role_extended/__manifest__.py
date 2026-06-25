@@ -14,6 +14,5 @@
         "security/ir.model.access.csv",
         "views/res_users_views.xml",
     ],
-    "application": True,
     "installable": True,
 }

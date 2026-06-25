@@ -1,15 +1,11 @@
 # Copyright 2026 CIT Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import api, fields, models
+from odoo import api, models, tools
 
 class ResUsersRole(models.Model):
     _name = "res.users.role"
     _inherit = ["res.users.role"]
-
-    role_model_access_ids = fields.One2many(
-        "role.model.access", "role_id", string="Role Model Access"
-    )
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -39,23 +35,7 @@ class ResUsersRole(models.Model):
             access_records = role.sudo().implied_ids.mapped("model_access")
             
             # Combine permissions per model to prevent unique constraint violations
-            model_permissions = {}
-            for acc in access_records:
-                model_id = acc.model_id.id
-                if model_id not in model_permissions:
-                    model_permissions[model_id] = {
-                        "perm_read": False,
-                        "perm_write": False,
-                        "perm_create": False,
-                        "perm_unlink": False,
-                    }
-                model_permissions[model_id]["perm_read"] |= acc.perm_read
-                model_permissions[model_id]["perm_write"] |= acc.perm_write
-                model_permissions[model_id]["perm_create"] |= acc.perm_create
-                model_permissions[model_id]["perm_unlink"] |= acc.perm_unlink
-            
-            # Clear existing role model access records to keep it in sync
-            role.role_model_access_ids.unlink()
+            model_permissions = self.parse_model_access(access_records)
             
             # Also clear existing standard ir.model.access records for this group
             self.env["ir.model.access"].search([("group_id", "=", role.group_id.id)]).unlink()
@@ -63,8 +43,6 @@ class ResUsersRole(models.Model):
             # Create the updated role model access records and ir.model.access records
             ir_access_vals = []
             for model_id, perms in model_permissions.items():
-
-                
                 model_rec = self.env["ir.model"].browse(model_id)
                 ir_access_vals.append({
                     "name": f"{model_rec.model}",
@@ -78,6 +56,23 @@ class ResUsersRole(models.Model):
             
             if ir_access_vals:
                 self.env["ir.model.access"].create(ir_access_vals)
+
+    def parse_model_access(self, model_access):
+        model_permissions = {}
+        for acc in model_access:
+            model_id = acc.model_id.id
+            if model_id not in model_permissions:
+                model_permissions[model_id] = {
+                    "perm_read": False,
+                    "perm_write": False,
+                    "perm_create": False,
+                    "perm_unlink": False,
+                }
+            model_permissions[model_id]["perm_read"] |= acc.perm_read
+            model_permissions[model_id]["perm_write"] |= acc.perm_write
+            model_permissions[model_id]["perm_create"] |= acc.perm_create
+            model_permissions[model_id]["perm_unlink"] |= acc.perm_unlink
+        return model_permissions
 
     def unlink(self):
         self.env["role.model.access"].search([("role_id", "in", self.ids)]).unlink()
