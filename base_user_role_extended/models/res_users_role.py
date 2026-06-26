@@ -94,7 +94,3 @@ class ResUsersRole(models.Model):
             for f in perm_fields:
                 model_permissions[model_id][f] |= getattr(acc, f)
         return model_permissions
-
-    def unlink(self):
-        self.env["role.model.access"].search([("role_id", "in", self.ids)]).unlink()
-        return super().unlink()
