@@ -39,7 +39,6 @@ class ResUsersRole(models.Model):
         # Invalidate the cache to avoid stale data from base_user_role's sudo() writes
         self.invalidate_recordset(["implied_ids"])
         self.mapped("group_id").invalidate_recordset(["implied_ids"])
-
         for role in self:
             access_records = role._get_implied_model_access_records()
             model_permissions = self.parse_model_access(
@@ -56,7 +55,14 @@ class ResUsersRole(models.Model):
         self.ensure_one()
         # Get all model access from the groups implied by this role using sudo()
         # to ensure we fetch the most up-to-date groups from the database.
-        return self.sudo().implied_ids.mapped("model_access")
+        all_groups = self.env["res.groups"].sudo()
+        groups_to_check = self.sudo().implied_ids
+
+        while groups_to_check:
+            all_groups |= groups_to_check
+            groups_to_check = groups_to_check.mapped("implied_ids") - all_groups
+
+        return all_groups.mapped("model_access")
 
     def _clear_existing_model_access(self):
         self.ensure_one()
