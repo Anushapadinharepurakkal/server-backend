@@ -90,7 +90,7 @@ class ResUsersRole(models.Model):
         for acc in model_access:
             model_id = acc.model_id.id
             if model_id not in model_permissions:
-                model_permissions[model_id] = perm_fields
+                model_permissions[model_id] = perm_fields.copy()
             for f in perm_fields:
                 model_permissions[model_id][f] |= getattr(acc, f)
         return model_permissions
