@@ -4,14 +4,22 @@
 from odoo import api, models
 
 
-
 class ResUsers(models.Model):
     _inherit = "res.users"
 
     @api.model
     def fetch_export_models(self):
-        """
-        Enforces exclusive role-based access for export models.
+        """Return the list of models the current user is allowed to export.
+
+        Enforces exclusive role-based access: only models whose
+        ``ir.model.access`` record has ``perm_export = True`` for one of the
+        current user's active role groups are returned.
+
+        Falls back to the standard implementation when:
+        - the parent method does not exist (``base_export_manager`` not
+          installed),
+        - the user has the ``bypass_role_policy`` flag set, or
+        - the user has no enabled roles.
         """
         if not hasattr(super(), "fetch_export_models"):
             return []
