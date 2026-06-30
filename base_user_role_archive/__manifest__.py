@@ -8,7 +8,7 @@
     "summary": "Extends user roles for archive access in model access",
     "author": "CIT Services, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/server-backend",
-    "license": "LGPL-3",
+    "license": "AGPL-3",
     "depends": ["base_user_role_extended"],
     "data": ["views/ir_model_access.xml", "views/res_groups.xml"],
     "assets": {

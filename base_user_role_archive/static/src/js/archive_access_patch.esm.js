@@ -1,10 +1,13 @@
-/** @odoo-module **/
+/**
+ * Copyright 2026 CIT Services
+ * License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
+ */
 
-import {patch} from "@web/core/utils/patch";
-import {ListController} from "@web/views/list/list_controller";
 import {FormController} from "@web/views/form/form_controller";
-import {rpc} from "@web/core/network/rpc";
+import {ListController} from "@web/views/list/list_controller";
 import {onWillStart} from "@odoo/owl";
+import {patch} from "@web/core/utils/patch";
+import {rpc} from "@web/core/network/rpc";
 
 /**
  * Fetches perm_archive / perm_unarchive for the current user and model.
