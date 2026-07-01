@@ -10,7 +10,7 @@
     "author": "CIT Services, Odoo Community Association (OCA)",
     "website": "https://github.com/OCA/server-backend",
     "license": "AGPL-3",
-    "depends": ["base_user_role", "base_user_role_extended", "base_export_manager"],
+    "depends": ["base_user_role_extended", "base_export_manager"],
     "data": [],
     "installable": True,
 }
