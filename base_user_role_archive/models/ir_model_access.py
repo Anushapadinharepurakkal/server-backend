@@ -15,25 +15,13 @@ class IrModelAccess(models.Model):
     @api.model
     @tools.ormcache("self.env.uid", "mode")
     def _get_allowed_models(self, mode="read"):
-        """Extend to support archive/unarchive access modes.
-
-        For users with active roles: replicates the role-group SQL query from
-        base_user_role_extended using the perm_archive / perm_unarchive columns
-        added by this module, WITHOUT calling super() (which would invoke Odoo
-        core and crash for non-standard modes).
-
-        For bypass users or users with no active roles: falls back to a
-        standard all-groups query against the new permission columns.
-
-        For all other modes: delegates entirely to super().
-        """
+        """Extend to support archive/unarchive access modes."""
         if mode not in ("archive", "unarchive"):
             return super()._get_allowed_models(mode)
 
         self.flush_model()
 
-        # Role users: query restricted to role-group IDs only
-        # (mirrors base_user_role_extended logic for standard modes).
+        # Role users: query restricted to role-group IDs + global rules
         user = self.env.user.sudo()
         if not user.bypass_role_policy:
             roles = user.role_line_ids.filtered(lambda line: line.is_enabled).mapped(
@@ -49,30 +37,36 @@ class IrModelAccess(models.Model):
                       JOIN ir_model m ON (m.id = a.model_id)
                      WHERE a.perm_%s
                        AND a.active
-                       AND a.group_id IN %s
+                       AND (
+                            a.group_id IS NULL OR
+                            a.group_id IN %s
+                        )
                     GROUP BY m.model
                     """,
                         SQL(mode),
-                        role_group_ids,
+                        role_group_ids or (None,),
                     )
                 )
                 return frozenset(row[0] for row in rows)
 
-        # Bypass users or users with no active roles: all groups.
+        # Bypass users or users with no active roles: all groups + global rules
         rows = self.env.execute_query(
             SQL(
                 """
             SELECT m.model
               FROM ir_model_access a
               JOIN ir_model m ON (m.id = a.model_id)
-              JOIN res_groups_users_rel gu ON (gu.gid = a.group_id)
+              LEFT JOIN res_groups_users_rel gu ON (gu.gid = a.group_id AND gu.uid = %s)
              WHERE a.perm_%s
                AND a.active
-               AND gu.uid = %s
+               AND (
+                    a.group_id IS NULL OR
+                    gu.uid IS NOT NULL
+                )
             GROUP BY m.model
             """,
-                SQL(mode),
                 self.env.uid,
+                SQL(mode),
             )
         )
         return frozenset(row[0] for row in rows)
