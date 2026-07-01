@@ -4,7 +4,6 @@
 {
     "name": "Base User Role Export",
     "version": "18.0.1.0.0",
-    "development_status": "Alpha",
     "category": "Tools",
     "summary": "Restrict export access via role-based groups using base_export_manager",
     "author": "CIT Services, Odoo Community Association (OCA)",
