@@ -20,7 +20,6 @@ class TestBaseUserRoleExtended(TransactionCase):
         cls.model_res_partner = cls.env.ref("base.model_res_partner")
         cls.model_res_users = cls.env.ref("base.model_res_users")
 
-        # Create a group that grants read and write access on res.partner
         cls.group_partner_manager = cls.env["res.groups"].create(
             {"name": "Partner Manager"}
         )
@@ -36,7 +35,6 @@ class TestBaseUserRoleExtended(TransactionCase):
             }
         )
 
-        # Create another group that grants read on res.users and create on res.partner
         cls.group_mixed = cls.env["res.groups"].create({"name": "Mixed Access"})
         cls.env["ir.model.access"].create(
             {
@@ -106,11 +104,9 @@ class TestBaseUserRoleExtended(TransactionCase):
         self.assertTrue(access_users.perm_read)
         self.assertFalse(access_users.perm_write)
 
-        # Test write without implied_ids doesn't crash or ruin access
         role.write({"name": "Renamed Role"})
         self.assertEqual(len(access_partner), 1)
 
-        # Test write removing a group
         role.write({"implied_ids": [(3, self.group_mixed.id)]})
         # Users model access should be removed because it was only in group_mixed
         access_users = self.env["ir.model.access"].search(
@@ -123,8 +119,6 @@ class TestBaseUserRoleExtended(TransactionCase):
 
     def test_ir_model_access_get_allowed_models(self):
         """Test the _get_allowed_models override using the test user and roles."""
-        # A normal user with no roles should get normal allowed models
-        # Clear any roles just in case
         self.test_user.role_line_ids.unlink()
 
         # Test cache and standard behavior
@@ -151,9 +145,7 @@ class TestBaseUserRoleExtended(TransactionCase):
         )
 
         self.env.registry.clear_cache()
-        # Now the user's role-based access overrides everything.
-        # group_mixed only has read access to res.users, and create on res.partner.
-        # So "read" on res.partner should be False (it was not granted by group_mixed).
+
         allowed_models_with_role = (
             self.env["ir.model.access"]
             .with_user(self.test_user)
@@ -192,10 +184,9 @@ class TestBaseUserRoleExtended(TransactionCase):
     def test_user_role_add_remove_access(self):
         """Test adding a role with access and then,
         removing it to ensure access is lost."""
-        # 1. Clean up any existing roles
+
         self.test_user.role_line_ids.unlink()
 
-        # 2. Create a role with partner manager access (Read & Write on res.partner)
         role = self.env["res.users.role"].create(
             {
                 "name": "Dynamic Access Role",
@@ -203,7 +194,7 @@ class TestBaseUserRoleExtended(TransactionCase):
             }
         )
 
-        # 3. Assign role to user
+        # Assign role to user
         self.env["res.users.role.line"].create(
             {
                 "user_id": self.test_user.id,
@@ -211,10 +202,9 @@ class TestBaseUserRoleExtended(TransactionCase):
             }
         )
 
-        # Invalidate cache so _get_allowed_models runs fresh
         self.env.registry.clear_cache()
 
-        # 4. Verify user initially has Read & Write access
+        # Verify user initially has Read & Write access
         allowed_read = (
             self.env["ir.model.access"]
             .with_user(self.test_user)
@@ -232,13 +222,11 @@ class TestBaseUserRoleExtended(TransactionCase):
             "res.partner", allowed_write, "User should have write access initially."
         )
 
-        # 5. Remove the group from the role
         role.write({"implied_ids": [(3, self.group_partner_manager.id)]})
 
-        # Invalidate cache again
         self.env.registry.clear_cache()
 
-        # 6. Verify user lost access
+        # Verify user lost access
         allowed_read_after = (
             self.env["ir.model.access"]
             .with_user(self.test_user)

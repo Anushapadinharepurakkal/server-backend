@@ -36,7 +36,6 @@ class ResUsersRole(models.Model):
             default_perm_fields.update(perm_fields)
         perm_fields = default_perm_fields
 
-        # Invalidate the cache to avoid stale data from base_user_role's sudo() writes
         self.invalidate_recordset(["implied_ids"])
         self.mapped("group_id").invalidate_recordset(["implied_ids"])
         for role in self:
@@ -53,8 +52,6 @@ class ResUsersRole(models.Model):
 
     def _get_implied_model_access_records(self):
         self.ensure_one()
-        # Get all model access from the groups implied by this role using sudo()
-        # to ensure we fetch the most up-to-date groups from the database.
         all_groups = self.env["res.groups"].sudo()
         groups_to_check = self.sudo().implied_ids
 
@@ -66,7 +63,6 @@ class ResUsersRole(models.Model):
 
     def _clear_existing_model_access(self):
         self.ensure_one()
-        # Clear existing standard ir.model.access records for this group
         self.env["ir.model.access"].search(
             [("group_id", "=", self.group_id.id)]
         ).unlink()

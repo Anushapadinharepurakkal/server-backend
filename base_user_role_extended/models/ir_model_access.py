@@ -28,14 +28,12 @@ class IrModelAccess(models.Model):
         if self.env.user.bypass_role_policy:
             return super()._get_allowed_models(mode)
 
-        # Collect the group_id of each active role for this user.
         user = self.env.user.sudo()
         roles = user.role_line_ids.filtered(lambda line: line.is_enabled).mapped(
             "role_id"
         )
 
         if not roles:
-            # No active roles → normal Odoo group-based access.
             return super()._get_allowed_models(mode)
 
         role_group_ids = tuple(roles.mapped("group_id")._ids)
