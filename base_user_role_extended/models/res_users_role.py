@@ -39,12 +39,12 @@ class ResUsersRole(models.Model):
         self.invalidate_recordset(["implied_ids"])
         self.mapped("group_id").invalidate_recordset(["implied_ids"])
         for role in self:
+            role._clear_existing_model_access()
+
             access_records = role._get_implied_model_access_records()
             model_permissions = self.parse_model_access(
                 access_records, perm_fields=perm_fields
             )
-
-            role._clear_existing_model_access()
 
             ir_access_vals = role._prepare_model_access_vals(model_permissions)
             if ir_access_vals:
