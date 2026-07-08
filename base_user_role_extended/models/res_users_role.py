@@ -26,16 +26,7 @@ class ResUsersRole(models.Model):
         Synchronize the access rights from the associated user groups
         into the role's model access records.
         """
-        default_perm_fields = {
-            "perm_read": False,
-            "perm_write": False,
-            "perm_create": False,
-            "perm_unlink": False,
-        }
-        if perm_fields is not None:
-            default_perm_fields.update(perm_fields)
-        perm_fields = default_perm_fields
-
+        all_perm_fields = self.collect_all_perm_fields(perm_fields)
         self.invalidate_recordset(["implied_ids"])
         self.mapped("group_id").invalidate_recordset(["implied_ids"])
         for role in self:
@@ -43,13 +34,25 @@ class ResUsersRole(models.Model):
 
             access_records = role._get_implied_model_access_records()
             model_permissions = self.parse_model_access(
-                access_records, perm_fields=perm_fields
+                access_records, perm_fields=all_perm_fields
             )
 
             ir_access_vals = role._prepare_model_access_vals(model_permissions)
             if ir_access_vals:
                 self.env["ir.model.access"].create(ir_access_vals)
-
+    
+    def collect_all_perm_fields(self, perm_fields=None):
+        default_perm_fields = {
+            "perm_read": False,
+            "perm_write": False,
+            "perm_create": False,
+            "perm_unlink": False,
+        }
+        if perm_fields:
+            default_perm_fields.update(perm_fields)
+        perm_fields = default_perm_fields
+        return perm_fields
+    
     def _get_implied_model_access_records(self):
         self.ensure_one()
         all_groups = self.env["res.groups"].sudo()
