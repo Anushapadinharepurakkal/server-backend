@@ -7,8 +7,8 @@ from odoo import models
 class ResUsersRole(models.Model):
     _inherit = "res.users.role"
 
-    def _update_role_model_access(self, perm_fields=None):
+    def collect_all_perm_fields(self, perm_fields=None):
         """Include `perm_import` in the synchronized permission fields."""
         perm_fields = perm_fields or {}
         perm_fields.setdefault("perm_import", False)
-        return super()._update_role_model_access(perm_fields=perm_fields)
+        return super().collect_all_perm_fields(perm_fields=perm_fields)
