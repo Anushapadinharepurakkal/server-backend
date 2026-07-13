@@ -1,16 +1,12 @@
 # Copyright 2026 CIT Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import _, api, fields, models, tools
-from odoo.exceptions import AccessError
+from odoo import _, api, models, tools
 from odoo.tools import SQL
 
 
 class IrModelAccess(models.Model):
     _inherit = "ir.model.access"
-
-    perm_archive = fields.Boolean("Archive Access", default=True)
-    perm_unarchive = fields.Boolean("Unarchive Access", default=True)
 
     @api.model
     @tools.ormcache("self.env.uid", "mode")
@@ -70,25 +66,6 @@ class IrModelAccess(models.Model):
             )
         )
         return frozenset(row[0] for row in rows)
-
-    @api.model
-    @tools.ormcache("self.env.uid", "model", "mode")
-    def check(self, model, mode="read", raise_exception=True):
-        """Extend to enforce archive/unarchive access rights."""
-        if mode not in ("archive", "unarchive"):
-            return super().check(model, mode=mode, raise_exception=raise_exception)
-        if self.env.su:
-            return True
-        has_access = model in self._get_allowed_models(mode)
-        if not has_access and raise_exception:
-            raise AccessError(
-                _(
-                    "You do not have %(mode)s access for %(model)s",
-                    mode=mode,
-                    model=model,
-                )
-            )
-        return has_access
 
     @api.model
     def get_archive_access(self, model):
