@@ -73,11 +73,10 @@ class ResUsersRole(models.Model):
     def _prepare_model_access_vals(self, model_permissions):
         self.ensure_one()
         ir_access_vals = []
-        for model_id, perms in model_permissions.items():
-            model_rec = self.env["ir.model"].browse(model_id)
+        for model_rec, perms in model_permissions.items():
             vals = {
                 "name": f"{model_rec.model}",
-                "model_id": model_id,
+                "model_id": model_rec.id,
                 "group_id": self.group_id.id,
             }
             vals.update(perms)
@@ -87,9 +86,9 @@ class ResUsersRole(models.Model):
     def parse_model_access(self, model_access, perm_fields):
         model_permissions = {}
         for acc in model_access:
-            model_id = acc.model_id.id
-            if model_id not in model_permissions:
-                model_permissions[model_id] = perm_fields.copy()
+            model_rec = acc.model_id
+            if model_rec not in model_permissions:
+                model_permissions[model_rec] = perm_fields.copy()
             for f in perm_fields:
-                model_permissions[model_id][f] |= getattr(acc, f)
+                model_permissions[model_rec][f] |= getattr(acc, f)
         return model_permissions
