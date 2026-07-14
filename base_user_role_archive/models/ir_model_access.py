@@ -15,8 +15,6 @@ class IrModelAccess(models.Model):
         if mode not in ("archive", "unarchive"):
             return super()._get_allowed_models(mode)
 
-        self.flush_model()
-
         # Role users: query restricted to role-group IDs + global rules
         user = self.env.user.sudo()
         if not user.bypass_role_policy:
@@ -25,47 +23,10 @@ class IrModelAccess(models.Model):
             )
             if roles:
                 role_group_ids = tuple(roles.mapped("group_id")._ids)
-                rows = self.env.execute_query(
-                    SQL(
-                        """
-                    SELECT m.model
-                      FROM ir_model_access a
-                      JOIN ir_model m ON (m.id = a.model_id)
-                     WHERE a.perm_%s
-                       AND a.active
-                       AND (
-                            a.group_id IS NULL OR
-                            a.group_id IN %s
-                        )
-                    GROUP BY m.model
-                    """,
-                        SQL(mode),
-                        role_group_ids or (None,),
-                    )
-                )
-                return frozenset(row[0] for row in rows)
+                return self._get_archive_allowed_models_with_groups(mode, role_group_ids)
 
         # Bypass users or users with no active roles: all groups + global rules
-        rows = self.env.execute_query(
-            SQL(
-                """
-            SELECT m.model
-              FROM ir_model_access a
-              JOIN ir_model m ON (m.id = a.model_id)
-              LEFT JOIN res_groups_users_rel gu ON (gu.gid = a.group_id AND gu.uid = %s)
-             WHERE a.perm_%s
-               AND a.active
-               AND (
-                    a.group_id IS NULL OR
-                    gu.uid IS NOT NULL
-                )
-            GROUP BY m.model
-            """,
-                self.env.uid,
-                SQL(mode),
-            )
-        )
-        return frozenset(row[0] for row in rows)
+        return super()._get_allowed_models(mode)
 
     @api.model
     def get_archive_access(self, model):
