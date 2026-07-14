@@ -11,8 +11,8 @@
     "license": "LGPL-3",
     "depends": ["base_user_role"],
     "data": [
-        "security/ir.model.access.csv",
         "views/res_users_views.xml",
     ],
     "installable": True,
+    "post_init_hook": "post_init_hook",
 }
