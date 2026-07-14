@@ -21,9 +21,6 @@ class ResUsers(models.Model):
         - the user has the ``bypass_role_policy`` flag set, or
         - the user has no enabled roles.
         """
-        if not hasattr(super(), "fetch_export_models"):
-            return []
-
         if self.env.user.bypass_role_policy:
             return super().fetch_export_models()
 
@@ -37,9 +34,6 @@ class ResUsers(models.Model):
 
         role_group_ids = tuple(roles.mapped("group_id").ids)
         accessobj = self.env["ir.model.access"].sudo()
-
-        if "perm_export" not in accessobj._fields:
-            return super().fetch_export_models()
 
         accessobj_ids = accessobj.search(
             [("perm_export", "=", True), ("group_id", "in", role_group_ids)]
