@@ -39,7 +39,9 @@ class ResUsersRole(models.Model):
 
             ir_access_vals = role._prepare_model_access_vals(model_permissions)
             if ir_access_vals:
-                self.env["ir.model.access"].create(ir_access_vals)
+                self.env["ir.model.access"].with_context(
+                    updating_role_model_access=True
+                ).create(ir_access_vals)
     
     def collect_all_perm_fields(self, perm_fields=None):
         default_perm_fields = {
@@ -62,9 +64,9 @@ class ResUsersRole(models.Model):
 
     def _clear_existing_model_access(self):
         self.ensure_one()
-        self.env["ir.model.access"].search(
-            [("group_id", "=", self.group_id.id)]
-        ).unlink()
+        self.env["ir.model.access"].with_context(
+            updating_role_model_access=True
+        ).search([("group_id", "=", self.group_id.id)]).unlink()
 
     def _prepare_model_access_vals(self, model_permissions):
         self.ensure_one()
