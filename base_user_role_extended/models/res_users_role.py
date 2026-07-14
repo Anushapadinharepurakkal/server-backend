@@ -32,7 +32,7 @@ class ResUsersRole(models.Model):
         for role in self:
             role._clear_existing_model_access()
 
-            access_records = role._get_implied_model_access_records()
+            access_records = role.model_access_ids
             model_permissions = self.parse_model_access(
                 access_records, perm_fields=all_perm_fields
             )
@@ -53,16 +53,12 @@ class ResUsersRole(models.Model):
         perm_fields = default_perm_fields
         return perm_fields
     
-    def _get_implied_model_access_records(self):
-        self.ensure_one()
-        all_groups = self.env["res.groups"].sudo()
-        groups_to_check = self.sudo().implied_ids
-
-        while groups_to_check:
-            all_groups |= groups_to_check
-            groups_to_check = groups_to_check.mapped("implied_ids") - all_groups
-
-        return all_groups.mapped("model_access")
+    @api.depends("implied_ids", "implied_ids.model_access")
+    def _compute_model_access_ids(self):
+        super()._compute_model_access_ids()
+        for rec in self:
+            rec.model_access_ids = rec.sudo().trans_implied_ids.model_access
+            rec.model_access_count = len(rec.model_access_ids)
 
     def _clear_existing_model_access(self):
         self.ensure_one()
@@ -85,10 +81,10 @@ class ResUsersRole(models.Model):
 
     def parse_model_access(self, model_access, perm_fields):
         model_permissions = {}
-        for acc in model_access:
-            model_rec = acc.model_id
+        for access in model_access:
+            model_rec = access.model_id
             if model_rec not in model_permissions:
                 model_permissions[model_rec] = perm_fields.copy()
-            for f in perm_fields:
-                model_permissions[model_rec][f] |= getattr(acc, f)
+            for field_name in perm_fields:
+                model_permissions[model_rec][field_name] |= getattr(access, field_name)
         return model_permissions
