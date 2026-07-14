@@ -59,8 +59,8 @@ class IrModelAccess(models.Model):
         )
         return frozenset(row[0] for row in rows)
 
-    # Handle access rights changes from the respective groups, 
-    # such as create, update, and deletion of access rights 
+    # Handle access rights changes from the respective groups,
+    # such as create, update, and deletion of access rights
     @api.model_create_multi
     def create(self, vals_list):
         records = super().create(vals_list)
@@ -76,19 +76,23 @@ class IrModelAccess(models.Model):
         roles = self._get_associated_roles()
         res = super().unlink()
         if roles and not self.env.context.get("updating_role_model_access"):
-            roles.with_context(updating_role_model_access=True)._update_role_model_access()
+            roles.with_context(
+                updating_role_model_access=True
+            )._update_role_model_access()
         return res
 
     def _get_associated_roles(self):
         """
-        Find roles where the trans_implied_ids includes the group_ids 
+        Find roles where the trans_implied_ids includes the group_ids
         of the current model access records.
         """
         group_ids = self.mapped("group_id").ids
         if not group_ids:
             return self.env["res.users.role"].browse()
-        return self.env["res.users.role"].search(
-            [("trans_implied_ids", "in", group_ids)]
+
+        roles = self.env["res.users.role"].search([])
+        return roles.filtered(
+            lambda r: not set(r.trans_implied_ids.ids).isdisjoint(group_ids)
         )
 
     def _update_associated_roles(self):
@@ -96,4 +100,6 @@ class IrModelAccess(models.Model):
             return
         roles = self._get_associated_roles()
         if roles:
-            roles.with_context(updating_role_model_access=True)._update_role_model_access()
+            roles.with_context(
+                updating_role_model_access=True
+            )._update_role_model_access()

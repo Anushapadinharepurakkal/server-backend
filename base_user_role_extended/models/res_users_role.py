@@ -42,19 +42,20 @@ class ResUsersRole(models.Model):
                 self.env["ir.model.access"].with_context(
                     updating_role_model_access=True
                 ).create(ir_access_vals)
-    
+
     def collect_all_perm_fields(self, perm_fields=None):
         default_perm_fields = {
             "perm_read": False,
             "perm_write": False,
             "perm_create": False,
             "perm_unlink": False,
+            "perm_export": False,  # supported in base_user_role_export module
         }
         if perm_fields:
             default_perm_fields.update(perm_fields)
         perm_fields = default_perm_fields
         return perm_fields
-    
+
     @api.depends("implied_ids", "implied_ids.model_access")
     def _compute_model_access_ids(self):
         super()._compute_model_access_ids()

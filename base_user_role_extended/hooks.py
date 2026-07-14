@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 def post_init_hook(env):
     roles = env["res.users.role"].search([])
     if roles:
