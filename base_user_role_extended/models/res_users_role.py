@@ -27,12 +27,20 @@ class ResUsersRole(models.Model):
         into the role's model access records.
         """
         all_perm_fields = self.collect_all_perm_fields(perm_fields)
+
+        # Precompute the trans_implied_ids before clearing the ORM cache
+        precomputed_groups = {role.id: role.sudo().trans_implied_ids for role in self}
+
         self.invalidate_recordset(["implied_ids"])
         self.mapped("group_id").invalidate_recordset(["implied_ids"])
         for role in self:
             role._clear_existing_model_access()
 
-            access_records = role.model_access_ids
+            # Inject the precomputed groups into the context to skip re-computation
+            role_ctx = role.with_context(
+                precomputed_role_groups=precomputed_groups[role.id]
+            )
+            access_records = role_ctx.model_access_ids
             model_permissions = self.parse_model_access(
                 access_records, perm_fields=all_perm_fields
             )
@@ -49,19 +57,23 @@ class ResUsersRole(models.Model):
             "perm_write": False,
             "perm_create": False,
             "perm_unlink": False,
-            "perm_export": False,  # supported in base_user_role_export module
         }
         if perm_fields:
             default_perm_fields.update(perm_fields)
-        perm_fields = default_perm_fields
-        return perm_fields
+        return default_perm_fields
 
     @api.depends("implied_ids", "implied_ids.model_access")
     def _compute_model_access_ids(self):
         super()._compute_model_access_ids()
         for rec in self:
-            rec.model_access_ids = rec.sudo().trans_implied_ids.model_access
+            rec.model_access_ids = rec._get_implied_model_access_records()
             rec.model_access_count = len(rec.model_access_ids)
+
+    def _get_implied_model_access_records(self):
+        self.ensure_one()
+        if "precomputed_role_groups" in self.env.context:
+            return self.env.context["precomputed_role_groups"].mapped("model_access")
+        return self.sudo().trans_implied_ids.model_access
 
     def _clear_existing_model_access(self):
         self.ensure_one()
