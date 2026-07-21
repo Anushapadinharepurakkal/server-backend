@@ -378,6 +378,21 @@ considers only those groups associated with the user’s active, enabled
 roles.</p>
 <p>This ensures a robust separation of concerns where role configurations
 supersede implicit or overlapping group permissions.</p>
+<blockquote>
+<p><strong>⚠️ Important Installation Note</strong></p>
+<p>Installing this module will <strong>recursively add all inherited model
+accesses to the role’s associated group access rights</strong>, even for the
+<strong>existing roles</strong> already present in the system. This means it might
+grant new access permissions to those existing roles based on their
+assigned groups’ inheritance.</p>
+<p><strong>Example:</strong> If you have an existing role “Sales Manager” that
+includes the standard group “Sales / Manager”, and that standard
+group inherits from “Sales / User”, installing this module will
+automatically copy all the model access rights from <em>both</em> “Sales /
+Manager” and “Sales / User” directly onto the role’s associated
+group. If the role was previously missing some of these inherited
+permissions, it will now possess them.</p>
+</blockquote>
 <p><strong>Table of contents</strong></p>
 <div class="contents local topic" id="contents">
 <ul class="simple">
@@ -424,7 +439,8 @@ If you spotted it first, help us to smash it by providing a detailed and welcome
 <div class="section" id="contributors">
 <h2><a class="toc-backref" href="#toc-entry-5">Contributors</a></h2>
 <ul class="simple">
-<li>CIT Services</li>
+<li>CIT Services &lt;cit-services.eu&gt;</li>
+<li>Solomon Prabu <a class="reference external" href="mailto:s.prabu&#64;cit-services.eu">s.prabu&#64;cit-services.eu</a></li>
 </ul>
 </div>
 <div class="section" id="maintainers">

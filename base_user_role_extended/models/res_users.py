@@ -14,11 +14,7 @@ class ResUsers(models.Model):
     )
 
     def _compute_bypass_role_policy(self):
+        admin = self.env.ref("base.user_admin", raise_if_not_found=False)
+        root = self.env.ref("base.user_root", raise_if_not_found=False)
         for user in self:
-            if user in (
-                self.env.ref("base.user_admin"),
-                self.env.ref("base.user_root"),
-            ):
-                user.bypass_role_policy = True
-            else:
-                user.bypass_role_policy = False
+            user.bypass_role_policy = user in (admin, root)

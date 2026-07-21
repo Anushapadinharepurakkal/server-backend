@@ -28,17 +28,19 @@ class IrModelAccess(models.Model):
         if self.env.user.bypass_role_policy:
             return super()._get_allowed_models(mode)
 
-        # Collect the group_id of each active role for this user.
-        user = self.env.user.sudo()
-        roles = user.role_line_ids.filtered(lambda line: line.is_enabled).mapped(
-            "role_id"
-        )
+        # Check if role_group_ids is passed in context to bypass DB/compute
+        if "role_group_ids" in self.env.context:
+            role_group_ids = tuple(self.env.context["role_group_ids"])
+            if not role_group_ids:
+                return super()._get_allowed_models(mode)
+        else:
+            user = self.env.user.sudo()
+            roles = user._get_enabled_roles().mapped("role_id")
 
-        if not roles:
-            # No active roles → normal Odoo group-based access.
-            return super()._get_allowed_models(mode)
+            if not roles:
+                return super()._get_allowed_models(mode)
 
-        role_group_ids = tuple(roles.mapped("group_id")._ids)
+            role_group_ids = tuple(roles.mapped("group_id")._ids)
 
         # Query ir.model.access restricted EXCLUSIVELY to the role group IDs.
         # No global (NULL group) fallback — if the role group's access record
@@ -60,3 +62,55 @@ class IrModelAccess(models.Model):
             )
         )
         return frozenset(row[0] for row in rows)
+
+    # Handle access rights changes from the respective groups,
+    # such as create, update, and deletion of access rights
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        records._update_associated_roles()
+        return records
+
+    def write(self, vals):
+        res = super().write(vals)
+        self._update_associated_roles()
+        return res
+
+    def unlink(self):
+        if self.env.context.get("updating_role_model_access") or self.env.context.get(
+            "install_mode"
+        ):
+            return super().unlink()
+
+        roles = self._get_associated_roles()
+        res = super().unlink()
+        if roles:
+            roles.with_context(
+                updating_role_model_access=True
+            )._update_role_model_access()
+        return res
+
+    def _get_associated_roles(self):
+        """
+        Find roles where the trans_implied_ids includes the group_ids
+        of the current model access records.
+        """
+        group_ids = self.mapped("group_id").ids
+        if not group_ids:
+            return self.env["res.users.role"].browse()
+
+        roles = self.env["res.users.role"].search([])
+        return roles.filtered(
+            lambda r: not set(r.trans_implied_ids.ids).isdisjoint(group_ids)
+        )
+
+    def _update_associated_roles(self):
+        if self.env.context.get("updating_role_model_access") or self.env.context.get(
+            "install_mode"
+        ):
+            return
+        roles = self._get_associated_roles()
+        if roles:
+            roles.with_context(
+                updating_role_model_access=True
+            )._update_role_model_access()
