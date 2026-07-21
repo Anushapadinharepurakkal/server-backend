@@ -1,8 +1,7 @@
 # Copyright 2026 CIT Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import _, api, models, tools
-from odoo.tools import SQL
+from odoo import api, models, tools
 
 
 class IrModelAccess(models.Model):
@@ -23,7 +22,9 @@ class IrModelAccess(models.Model):
             )
             if roles:
                 role_group_ids = tuple(roles.mapped("group_id")._ids)
-                return self._get_archive_allowed_models_with_groups(mode, role_group_ids)
+                return self._get_archive_allowed_models_with_groups(
+                    mode, role_group_ids
+                )
 
         # Bypass users or users with no active roles: all groups + global rules
         return super()._get_allowed_models(mode)
