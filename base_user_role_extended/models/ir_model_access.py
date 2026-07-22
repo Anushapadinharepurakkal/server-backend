@@ -34,17 +34,19 @@ class IrModelAccess(models.Model):
             if not role_group_ids:
                 return super()._get_allowed_models(mode)
         else:
-            user = self.env.user.sudo()
-            roles = user._get_enabled_roles().mapped("role_id")
+            role_group_ids = tuple(
+                self.env.user.with_context(role=True)._get_group_ids()
+            )
 
-            if not roles:
+            if not role_group_ids:
                 return super()._get_allowed_models(mode)
 
-            role_group_ids = tuple(roles.mapped("group_id")._ids)
+        if role_group_ids:
+            # Strictly use only the explicitly assigned role groups
+            role_group_ids = tuple(role_group_ids)
 
-        # Query ir.model.access restricted EXCLUSIVELY to the role group IDs.
-        # No global (NULL group) fallback — if the role group's access record
-        # for a model is deleted, that model becomes inaccessible immediately.
+        # Query ir.model.access restricted strictly to the explicit
+        # role groups + global access
         self.flush_model()
         rows = self.env.execute_query(
             SQL(
@@ -54,11 +56,14 @@ class IrModelAccess(models.Model):
               JOIN ir_model m ON (m.id = a.model_id)
              WHERE a.perm_%s
                AND a.active
-               AND a.group_id IN %s
+               AND (
+                    a.group_id IS NULL OR
+                    a.group_id IN %s
+                )
             GROUP BY m.model
             """,
                 SQL(mode),
-                role_group_ids,
+                role_group_ids or (None,),
             )
         )
         return frozenset(row[0] for row in rows)

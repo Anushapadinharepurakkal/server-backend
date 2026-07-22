@@ -1,7 +1,7 @@
 # Copyright 2026 CIT Services
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
-from odoo import fields, models
+from odoo import fields, models, tools
 
 
 class ResUsers(models.Model):
@@ -18,3 +18,20 @@ class ResUsers(models.Model):
         root = self.env.ref("base.user_root", raise_if_not_found=False)
         for user in self:
             user.bypass_role_policy = user in (admin, root)
+
+    def set_groups_from_roles(self, force=False):
+        # Admin / root users should not have their actual groups replaced by roles
+        # because they bypass role policy and rely on their standard groups.
+        users_to_update = self.filtered(lambda u: not u.bypass_role_policy)
+        if users_to_update:
+            return super(ResUsers, users_to_update).set_groups_from_roles(force=force)
+        return True
+
+    @tools.ormcache("self.env.uid", "self.env.context.get('role')")
+    def _get_group_ids(self):
+        if self.env.context.get("role"):
+            roles = self.sudo()._get_enabled_roles().mapped("role_id")
+            if roles:
+                return frozenset(roles.mapped("group_id")._ids)
+            return frozenset()
+        return super()._get_group_ids()

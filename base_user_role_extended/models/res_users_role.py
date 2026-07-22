@@ -64,10 +64,11 @@ class ResUsersRole(models.Model):
 
     @api.depends("implied_ids", "implied_ids.model_access")
     def _compute_model_access_ids(self):
-        super()._compute_model_access_ids()
+        res = super()._compute_model_access_ids()
         for rec in self:
             rec.model_access_ids = rec._get_implied_model_access_records()
             rec.model_access_count = len(rec.model_access_ids)
+        return res
 
     def _get_implied_model_access_records(self):
         self.ensure_one()
