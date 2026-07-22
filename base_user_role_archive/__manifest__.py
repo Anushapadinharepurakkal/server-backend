@@ -10,10 +10,5 @@
     "website": "https://github.com/OCA/server-backend",
     "license": "AGPL-3",
     "depends": ["base_user_role_extended", "base_archive_manager"],
-    "assets": {
-        "web.assets_backend": [
-            "base_user_role_archive/static/src/js/archive_access_patch.esm.js",
-        ],
-    },
     "installable": True,
 }

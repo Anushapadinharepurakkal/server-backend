@@ -6,13 +6,12 @@ from odoo import models
 class ResUsersRole(models.Model):
     _inherit = "res.users.role"
 
-    def _update_role_model_access(self, perm_fields=None):
-        if perm_fields is None:
-            perm_fields = {}
-        perm_fields.update(
+    def collect_all_perm_fields(self, perm_fields=None):
+        res = super().collect_all_perm_fields(perm_fields=perm_fields)
+        res.update(
             {
                 "perm_archive": False,
                 "perm_unarchive": False,
             }
         )
-        return super()._update_role_model_access(perm_fields)
+        return res
