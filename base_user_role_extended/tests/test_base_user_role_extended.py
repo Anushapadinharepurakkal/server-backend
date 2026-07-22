@@ -243,3 +243,136 @@ class TestBaseUserRoleExtended(TransactionCase):
         self.assertNotIn(
             "res.partner", allowed_write_after, "User should have lost write access."
         )
+
+    def test_hooks(self):
+        from ..hooks import post_init_hook
+
+        post_init_hook(self.env)
+
+        # Also test with no roles
+        self.env["res.users.role"].search([]).unlink()
+        post_init_hook(self.env)
+
+    def test_ir_model_access_context(self):
+        """Test the context bypass in _get_allowed_models"""
+        allowed_models = (
+            self.env["ir.model.access"]
+            .with_user(self.test_user)
+            .with_context(role_group_ids=[self.group_partner_manager.id])
+            ._get_allowed_models("read")
+        )
+        self.assertIn("res.partner", allowed_models)
+
+        allowed_models_empty = (
+            self.env["ir.model.access"]
+            .with_user(self.test_user)
+            .with_context(role_group_ids=[])
+            ._get_allowed_models("read")
+        )
+        self.assertIn("res.partner", allowed_models_empty)
+
+    def test_ir_model_access_crud(self):
+        """Test write and unlink on ir.model.access syncing with roles"""
+        role = self.env["res.users.role"].create(
+            {
+                "name": "CRUD Role",
+                "implied_ids": [(4, self.group_partner_manager.id)],
+            }
+        )
+
+        access = self.env["ir.model.access"].search(
+            [
+                ("group_id", "=", self.group_partner_manager.id),
+                ("model_id", "=", self.model_res_partner.id),
+            ]
+        )
+
+        # Write
+        access.write({"perm_create": True})
+        role_access = self.env["ir.model.access"].search(
+            [
+                ("group_id", "=", role.group_id.id),
+                ("model_id", "=", self.model_res_partner.id),
+            ]
+        )
+        self.assertTrue(role_access.perm_create)
+
+        # Unlink
+        access.unlink()
+        role_access = self.env["ir.model.access"].search(
+            [
+                ("group_id", "=", role.group_id.id),
+                ("model_id", "=", self.model_res_partner.id),
+            ]
+        )
+        self.assertFalse(role_access)
+
+    def test_ir_model_access_no_groups(self):
+        """Test _get_associated_roles with no groups"""
+        access = self.env["ir.model.access"].create(
+            {
+                "name": "Test access no group",
+                "model_id": self.model_res_partner.id,
+            }
+        )
+        # unlink should pass through without finding associated roles
+        access.unlink()
+        self.assertFalse(access.exists())
+
+    def test_res_users_role_perm_fields(self):
+        """Test collect_all_perm_fields and without precomputed groups context"""
+        role = self.env["res.users.role"].create(
+            {
+                "name": "Perm Fields Role",
+            }
+        )
+        role._update_role_model_access(perm_fields={"perm_read": True})
+
+        # Test without context for _get_implied_model_access_records
+        records = role._get_implied_model_access_records()
+        self.assertFalse(records)
+
+    def test_ir_actions_server_role_bypass(self):
+        """Test that server actions natively bypass strict write checks
+        when the user has a strict role."""
+
+        self.test_user.role_line_ids.unlink()
+
+        # 1. Give test_user a role with ONLY read access to res.users (group_mixed)
+        role = self.env["res.users.role"].create(
+            {
+                "name": "Read Users Role",
+                "implied_ids": [(4, self.group_mixed.id)],
+            }
+        )
+        self.env["res.users.role.line"].create(
+            {
+                "user_id": self.test_user.id,
+                "role_id": role.id,
+            }
+        )
+        self.env.registry.clear_cache()
+
+        # 2. Verify test_user has NO write access to res.users natively
+        allowed_write = (
+            self.env["ir.model.access"]
+            .with_user(self.test_user)
+            ._get_allowed_models("write")
+        )
+        self.assertNotIn("res.users", allowed_write)
+
+        # 3. Create a server action on res.users with NO groups
+        action = self.env["ir.actions.server"].create(
+            {
+                "name": "Test Action",
+                "model_id": self.model_res_users.id,
+                "state": "code",
+                "code": 'action = {"type": "ir.actions.act_window_close"}',
+            }
+        )
+
+        # 4. Without our override, this would crash with an AccessError natively
+        # since it hardchecks check_access('write') when groups_id is empty.
+        # With our override, it should run seamlessly.
+        result = action.with_user(self.test_user).run()
+        self.assertEqual(result.get("type"), "ir.actions.act_window_close")
