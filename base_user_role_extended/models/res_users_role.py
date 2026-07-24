@@ -14,6 +14,14 @@ class ResUsersRole(models.Model):
         records._update_role_model_access()
         return records
 
+    def unlink(self):
+        recs = (
+            self.sudo()
+            if self._bypass_rules() or self.env.user.bypass_role_policy
+            else self
+        )
+        return super(ResUsersRole, recs).unlink()
+
     def write(self, vals):
         update_access = "implied_ids" in vals
         res = super().write(vals)
@@ -104,3 +112,15 @@ class ResUsersRole(models.Model):
             for field_name in perm_fields:
                 model_permissions[model_rec][field_name] |= getattr(access, field_name)
         return model_permissions
+
+
+class ResUsersRoleLine(models.Model):
+    _inherit = "res.users.role.line"
+
+    def unlink(self):
+        recs = (
+            self.sudo()
+            if self._bypass_rules() or self.env.user.bypass_role_policy
+            else self
+        )
+        return super(ResUsersRoleLine, recs).unlink()
