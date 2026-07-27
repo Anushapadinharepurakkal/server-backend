@@ -60,6 +60,15 @@ supersede implicit or overlapping group permissions.
 .. contents::
    :local:
 
+Installation
+============
+
+To install this module, you need to:
+
+1. Ensure the dependency ``base_user_role`` is available in your addons
+   path.
+2. Install this module ``base_user_role_extended``.
+
 Usage
 =====
 
@@ -73,6 +82,14 @@ To use this module, you need to:
 5. The user's CRUD access to models will now be strictly constrained to
    only the permissions explicitly granted by their active roles,
    ignoring any other direct group memberships.
+
+Changelog
+=========
+
+18.0.1.0.0
+----------
+
+- Initial release.
 
 Bug Tracker
 ===========
