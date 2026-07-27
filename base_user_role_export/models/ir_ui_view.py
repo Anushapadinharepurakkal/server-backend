@@ -8,10 +8,11 @@ class IrUiView(models.Model):
     _inherit = "ir.ui.view"
 
     def _get_export_group_ids(self):
-        """Helper to get user group IDs for import check. Overridden by role integration."""
+        """Helper to get user group IDs for import check.
+        Overridden by role integration."""
         user = self.env.user
         if user.role_line_ids:
-            group_ids = user.role_line_ids.mapped('role_id.group_id').ids
+            group_ids = user.role_line_ids.mapped("role_id.group_id").ids
         else:
             group_ids = user.groups_id.ids
         return group_ids

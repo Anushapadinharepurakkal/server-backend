@@ -38,6 +38,10 @@ that belong to the user's active role groups. Any model not covered by
 such a record will be hidden from export, regardless of other group
 memberships.
 
+Additionally, the export action (``export_xlsx`` button) in list and
+kanban views is dynamically disabled for models where the active role
+does not explicitly grant export access.
+
    **Important:** The Odoo group **"Access to export feature"**
    (``base.group_allow_export``) **must be added to a role's implied
    groups** for the export feature to be available to users assigned
@@ -49,6 +53,15 @@ memberships.
 
 .. contents::
    :local:
+
+Installation
+============
+
+To install this module, you need to:
+
+1. Ensure the dependencies ``base_user_role_extended`` and
+   ``base_export_manager`` are available in your addons path.
+2. Install this module ``base_user_role_export``.
 
 Usage
 =====
@@ -70,6 +83,15 @@ To use this module:
 Users governed by an active role will only be able to export models for
 which their role's model access record has ``perm_export`` checked
 **and** the "Access to export feature" group is implied by their role.
+
+Changelog
+=========
+
+18.0.1.0.0
+----------
+
+- Initial release. Includes dynamic restriction of the ``export_xlsx``
+  action in list and kanban views based on user role permissions.
 
 Bug Tracker
 ===========
