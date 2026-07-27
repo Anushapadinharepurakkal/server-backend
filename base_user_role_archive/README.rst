@@ -52,6 +52,15 @@ role's associated group access records are evaluated.
 .. contents::
    :local:
 
+Installation
+============
+
+To install this module, you need to:
+
+1. Ensure the dependencies ``base_user_role_extended`` and
+   ``base_archive_manager`` are available in your addons path.
+2. Install this module ``base_user_role_archive``.
+
 Usage
 =====
 
@@ -64,6 +73,14 @@ Usage
    the action menus for users with this role, and server-side
    enforcement will block any direct write to the ``active`` field as
    well.
+
+Changelog
+=========
+
+18.0.1.0.0
+----------
+
+- Initial release.
 
 Bug Tracker
 ===========
