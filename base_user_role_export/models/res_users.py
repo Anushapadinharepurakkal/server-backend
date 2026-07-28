@@ -36,6 +36,11 @@ class ResUsers(models.Model):
         accessobj = self.env["ir.model.access"].sudo()
 
         accessobj_ids = accessobj.search(
-            [("perm_export", "=", True), ("group_id", "in", role_group_ids)]
+            [
+                ("perm_export", "=", True),
+                "|",
+                ("group_id", "=", False),
+                ("group_id", "in", role_group_ids),
+            ]
         )
         return list(set(accessobj_ids.mapped("model_id.model")))

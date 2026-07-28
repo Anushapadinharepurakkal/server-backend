@@ -7,18 +7,8 @@ from odoo import models
 class IrUiView(models.Model):
     _inherit = "ir.ui.view"
 
-    def _get_export_group_ids(self):
-        """Helper to get user group IDs for import check.
-        Overridden by role integration."""
-        user = self.env.user
-        if user.role_line_ids:
-            group_ids = user.role_line_ids.mapped("role_id.group_id").ids
-        else:
-            group_ids = user.groups_id.ids
-        return group_ids
-
     def _postprocess_access_rights(self, tree):
-        """Disable the import action based on the user's
+        """Disable the 'export all' action based on the user's
         effective model access rights."""
         target_model = tree.get("model_access_rights")
         tree = super()._postprocess_access_rights(tree)
@@ -26,7 +16,7 @@ class IrUiView(models.Model):
         if not target_model or tree.tag not in ("list", "kanban"):
             return tree
 
-        group_ids = self._get_export_group_ids()
+        group_ids = tuple(self.env.user.with_context(role=True)._get_group_ids())
         has_export = bool(
             self.env["ir.model.access"]
             .sudo()
